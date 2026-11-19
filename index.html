@@ -718,6 +718,15 @@ input[type="radio"] { width: auto; min-height: auto; padding: 0; accent-color: v
     else toast("+" + xp + " XP · " + label);
     save(); render();
   }
+  function unaward(q) {
+    var amt = typeof q.awarded === "number" ? q.awarded : 0;
+    q.awarded = null;
+    if (amt > 0) {
+      state.earned = Math.max(state.spent, state.earned - amt);
+      save(); renderHud();
+      toast("−" + amt + " XP returned · quest undone");
+    }
+  }
 
   /* ---------- rendering ---------- */
   var viewEl = document.getElementById("view");
@@ -1459,22 +1468,25 @@ input[type="radio"] { width: auto; min-height: auto; padding: 0; accent-color: v
         q = find(state.quests, id); if (!q) return;
         q.doneOn = today();
         if (state.days.indexOf(today()) === -1) state.days.push(today());
-        award(state.prices.daily, q.title + " · streak +1 day");
+        q.awarded = state.prices.daily;
+        award(q.awarded, q.title + " · streak +1 day");
         break;
       case "undo-daily":
         q = find(state.quests, id); if (!q) return;
-        q.doneOn = null; save(); render();
+        q.doneOn = null;
+        unaward(q); save(); render();
         break;
       case "complete":
         q = find(state.quests, id); if (!q) return;
         if (q.type === "daily") { q.doneOn = today(); if (state.days.indexOf(today()) === -1) state.days.push(today()); }
         else { q.done = true; }
-        award(state.prices[q.type], q.title);
+        q.awarded = state.prices[q.type];
+        award(q.awarded, q.title);
         break;
       case "undo":
         q = find(state.quests, id); if (!q) return;
         if (q.type === "daily") q.doneOn = null; else q.done = false;
-        save(); render();
+        unaward(q); save(); render();
         break;
       case "slay":
         b = find(state.beasts, id); if (!b) return;
